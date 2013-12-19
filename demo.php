@@ -30,4 +30,8 @@ $params = array(
 );
 
 $response = $httpClient->post($resource, $params);
+echo $response->getBody(); // raw Http response as it is sent
+echo $response->getStatus(); // Http Status code
+echo $response->getUrl();
+echo $response->getHeaders(); // Http Response Headers
 //$response = $httpClient->get($resource);

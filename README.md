@@ -17,6 +17,7 @@ Currently the following HTTP verb are supported:
 * POST
 * PUT
 * HEAD
+* DELETE
 
 ## Usage
 Copy the few file in the httpclient folder or clone it into your project and you are good to go.

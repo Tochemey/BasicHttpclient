@@ -31,6 +31,3 @@ $params = array(
 
 $response = $httpClient->post($resource, $params);
 //$response = $httpClient->get($resource);
-//$url = "http://api.smsgh.com/v3/messages/";
-//
-//print_r(get_headers($url, 1));

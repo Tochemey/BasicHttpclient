@@ -46,7 +46,11 @@ Example code to post data from a Web Server with a Basic Authorization
     );
 
     $response = $httpClient->post($resource, $params);
-    echo $response->getBody(); // Display the response content
+
+    echo $response->getBody(); // raw Http response as it is received
+    echo $response->getStatus(); // Http Status code
+    echo $response->getUrl();
+    echo $response->getHeaders(); // Http Response Headers
 
 Example code to fetch data from a Web server 
     

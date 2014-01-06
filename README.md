@@ -32,7 +32,7 @@ Example code to post data from a Web Server with a Basic Authorization
     $baseUrl = "http://".$hostname."/v3";
 
     // New instance of the BasicHttpClient
-    $httpClient = BasicHttpClient::build($baseUrl);
+    $httpClient = BasicHttpClient::init($baseUrl);
     $httpClient->setBasicAuth($clientId, $clientPass);
     $httpClient->setConnectionTimeout(0);
     $httpClient->setReadTimeout(0);

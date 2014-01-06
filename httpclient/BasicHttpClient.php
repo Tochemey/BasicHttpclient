@@ -16,7 +16,7 @@ class BasicHttpClient extends AbstractHttpClient {
         parent::__construct($baseUrl, $requestHandler);
     }
 
-    public static function build($baseUrl) {
+    public static function init($baseUrl) {
         return new BasicHttpClient($baseUrl, new BasicRequestHandler());
     }
 

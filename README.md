@@ -56,6 +56,11 @@ Example code to fetch data from a Web server
     
     // Using get Http verb
     $response = $httpClient->get($resource);
+### Notes
+
+The server response stored in the $response variable is an instance of HttpResponse. The most important sections of that object
+are the Status code and the response body. 
+The status code is an integer and the response body is a json data string. So any Php json library can parse the json string.
 
 ## Milestone
 * Support of SSL

@@ -24,8 +24,8 @@ Copy the few file in the httpclient folder or clone it into your project and you
 
 Example code to post data from a Web Server with a Basic Authorization
 
-    $clientId = "pitnnmim";
-    $clientPass = "btfdtdze";
+    $clientId = "user2334";
+    $clientPass = "password2344";
     $hostname = "api.smsgh.com";
     $resource = "/messages/";
 
@@ -40,7 +40,7 @@ Example code to post data from a Web Server with a Basic Authorization
     // Let us send quick message against the Http API
     $params = array(
         "From" => "smsgh",
-        "To" => "+233244536448",
+        "To" => "+2332409876789",
         "Content" => "Hey Micky What do you think you are doing?",
         "RegisteredDelivery" => "false"
     );

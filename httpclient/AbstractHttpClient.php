@@ -29,6 +29,7 @@ abstract class AbstractHttpClient {
     protected $logger;
     private $connected;
     private $requestHeaders = array();
+    private $boundary;
 
     public function __construct($baseUrl, $requestHandler) {
         $this->baseUrl = $baseUrl;
@@ -86,7 +87,7 @@ abstract class AbstractHttpClient {
                 // The request Url is valid so we can reuse it here to grab the request headers
                 // using the get_headers routine
                 $requestUrl = $this->baseUrl . $httpRequest->getPath();
-                
+
                 // Assume connection sucessful
                 $this->connected = TRUE;
                 $this->prepareConnection($httpRequest->getContentType(), $httpRequest->getAccept());
@@ -104,10 +105,78 @@ abstract class AbstractHttpClient {
                 // check whether there are no errors that could trigger a CurlException
                 if ($response === FALSE) {
                     $this->onError($requestUrl, curl_error($this->curlHandle));
-                }
-                else{
+                } else {
                     $httpResponse = new HttpResponse($this->curlHandle, $response);
-                }                
+                }
+            }
+        } catch (Exception $ex) {
+            print "Error " . $ex->getTrace();
+        }
+
+        // Log the Http Response
+        if ($httpResponse != NULL && $this->logger->isLoggingEnabled()) {
+            $this->logger->logResponse($httpResponse);
+        }
+        return $httpResponse;
+    }
+
+    /**
+     * Post files to a remote server.
+     * @param string $path The path to the resource
+     * @param string $accept The server expected response mime type
+     * @param array $form additional form data to send along the file
+     * @param array $files files to upload.
+     * @return HttpResponse
+     */
+    public function postFiles($path, $accept, array $form = array(), array $files = array()) {
+        try {
+            // Not yet connected
+            $this->connected = FALSE;
+            $this->openConnection($path);
+
+            // The request Url is valid so we can reuse it here to grab the request headers
+            // using the get_headers routine
+            $requestUrl = $this->baseUrl . $path;
+
+            // Assume connection sucessful
+            $this->connected = TRUE;
+            // Use a new connection instead of a cached connection
+            curl_setopt($this->curlHandle, CURLOPT_FRESH_CONNECT, TRUE);
+
+            // Connection timeout
+            curl_setopt($this->curlHandle, CURLOPT_CONNECTTIMEOUT_MS, $this->connectionTimeout);
+            curl_setopt($this->curlHandle, CURLOPT_TIMEOUT_MS, $this->readTimeout);
+            $this->appendRequestHeaders($this->curlHandle);
+            $body = $this->buildCurlMulipartBody($accept, $form, $files);
+            curl_setopt($this->curlHandle, CURLOPT_HEADER, FALSE);
+            curl_setopt($this->curlHandle, CURLINFO_HEADER_OUT, true);
+            curl_setopt($this->curlHandle, CURLOPT_RETURNTRANSFER, TRUE);
+
+            curl_setopt_array($this->curlHandle, array(
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => $body,
+                CURLOPT_HTTPHEADER => array(
+                    "Accept: $accept",
+                    "Accept-Charset : UTF-8",
+                    "Expect: 100-continue",
+                    "Content-Type: multipart/form-data; boundary={$this->boundary}", // change Content-Type
+                ),
+            ));
+
+            // log request
+            if ($this->logger->isLoggingEnabled()) {
+                $requestHeaders = get_headers($requestUrl, 1);
+                $this->logger->logMultipartRequest($requestHeaders, $accept, "POST");
+            }
+
+            // let us fire the http request
+            $response = $this->writeToStream($this->curlHandle);
+
+            // check whether there are no errors that could trigger a CurlException
+            if ($response === FALSE) {
+                $this->onError($requestUrl, curl_error($this->curlHandle));
+            } else {
+                $httpResponse = new HttpResponse($this->curlHandle, $response);
             }
         } catch (Exception $ex) {
             print "Error " . $ex->getTrace();
@@ -476,6 +545,76 @@ abstract class AbstractHttpClient {
         } else {
             trigger_error("Unexpected Error:  {$others}", E_ERROR);
         }
+    }
+
+    /**
+     * This function helps build multipart body for file upload.
+     * @staticvar array $disallow
+     * @param string $accept the expected result mime type from server
+     * @param array $assoc
+     * @param array $files
+     * @return string The paylod body
+     */
+    protected function buildCurlMulipartBody($accept, array $assoc = array(), array $files = array()) {
+        // invalid characters for "name" and "filename"
+        static $disallow = array("\0", "\"", "\r", "\n");
+
+        // build normal parameters
+        foreach ($assoc as $k => $v) {
+            $k = str_replace($disallow, "_", $k);
+            $body[] = implode("\r\n", array(
+                "Content-Disposition: form-data; name=\"{$k}\"",
+                "",
+                filter_var($v),
+            ));
+        }
+
+        // build file parameters
+        foreach ($files as $k => $v) {
+            switch (true) {
+                case false === $v = realpath(filter_var($v)):
+                case!is_file($v):
+                case!is_readable($v):
+                    continue; // or return false, throw new InvalidArgumentException
+            }
+            $data = file_get_contents($v);
+
+            // Let us get the file details
+            $details = pathinfo($v);
+            $fileName = $details["basename"];
+            $fileName = str_replace($disallow, "_", $fileName);
+
+            // Let us get the file mime type
+            $fileContentType = FileExtensionMimeTypeMapping::getMimeType($fileName);
+
+            // fieldName
+            $k = str_replace($disallow, "_", $k);
+
+            $body[] = implode("\r\n", array(
+                "Content-Disposition: form-data; name=\"{$k}\"; filename=\"{$fileName}\"",
+                "Content-Type: {$fileContentType}",
+                "",
+                $data,
+            ));
+        }
+
+        // generate safe boundary 
+        do {
+            $boundary = "---------------------" . md5(mt_rand() . microtime());
+        } while (preg_grep("/{$boundary}/", $body));
+
+        $this->boundary = $boundary;
+
+        // add boundary for each parameters
+        array_walk($body, function (&$part) use ($boundary) {
+            $part = "--{$boundary}\r\n{$part}";
+        });
+
+        // add final boundary
+        $body[] = "--{$boundary}--";
+        $body[] = "";
+
+        return implode("\r\n", $body);
     }
 
 }

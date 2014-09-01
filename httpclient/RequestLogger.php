@@ -29,4 +29,12 @@ interface RequestLogger {
      * @param HttpResponse $response The Http Response
      */
     public function logResponse($response);
+
+    /**
+     * Log the HTTP request while uploading file onto the server.
+     * @param array $headers
+     * @param string $accept Response Mime Type
+     * @param string $method Request method
+     */
+    public function logMultipartRequest($headers, $accept, $method);
 }

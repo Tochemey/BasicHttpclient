@@ -47,4 +47,11 @@ class ConsoleLogger implements RequestLogger {
         }
     }
 
+    public function logMultipartRequest($headers, $accept, $method) {
+        $this->log("=== HTTP Request ===");
+        $this->logHeaders($headers);
+        $this->log("Request Method :" . $method);
+        $this->log("Accept : " . $accept);
+    }
+
 }

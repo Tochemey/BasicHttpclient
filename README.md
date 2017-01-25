@@ -19,6 +19,8 @@ Currently the following HTTP verb are supported:
 * HEAD
 * DELETE
 
+Also all requests are sent as form-urlencoded data.
+
 ## Usage
 Copy the few file in the httpclient folder or clone it into your project and you are good to go.
 
@@ -65,3 +67,4 @@ The status code is an integer and the response body is a json data string. So an
 ## Milestone
 * Support of SSL
 * Asynchronous Requests for scalability sake
+* Support for other content types like json etc...

@@ -1,0 +1,15 @@
+{
+  "name": "BasicHttpClient",
+  "description": "HTTP Client",
+  "minimum-stability": "stable",
+  "license": "Apache License 2",
+  "authors": [
+    {
+      "name": "Arsene Tochemey GANDOTE",
+      "email": "tochemey@gmail.com"
+    }
+  ],
+  "require": {
+    "phpunit/phpunit": "5.7.6"
+  }
+}
